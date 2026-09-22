@@ -1,0 +1,2 @@
+model,accuracy,precision,recall,f1
+Naive Bayes - Test,0.7130434782608696,0.8562874251497006,0.3733681462140992,0.52
