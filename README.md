@@ -140,6 +140,10 @@ HINSAFE/
 │   └── processed/
 │       └── hinsafe_final_dataset.csv        # Final merged dataset
 │
+│
+├── embeddings/                         ← ADD THIS FOLDER
+│   └── cc.hi.300.bin                  ← FastText Hindi model
+|
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_preprocessing.ipynb
