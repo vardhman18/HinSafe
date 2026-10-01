@@ -29,6 +29,7 @@ def get_bilstm_features(
     max_vocab_size=20000,
     max_sequence_length=50
 ):
+    
     """
     Tokenize and pad text for the BiLSTM model used in notebook.
     """
