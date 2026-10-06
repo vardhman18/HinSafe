@@ -1,6 +1,5 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-
 def get_tfidf_features(
     train_texts,
     test_texts,
@@ -31,7 +30,7 @@ def get_bilstm_features(
 ):
     
     """
-    Tokenize and pad text for the BiLSTM model used in notebook.
+    Tokenize and pad text for the BiLSTM model.
     """
 
     from tensorflow.keras.preprocessing.text import Tokenizer

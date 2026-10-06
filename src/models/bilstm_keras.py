@@ -1,6 +1,5 @@
 from pathlib import Path
 import pickle
-
 import numpy as np
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import (
@@ -194,8 +193,7 @@ def train_model(
 
 
 def predict_model(model, X):
-    """Return probabilities and binary predictions."""
-
+    
     probabilities = model.predict(X, verbose=0).reshape(-1)
     predictions = (probabilities >= 0.5).astype(int)
 
@@ -203,7 +201,6 @@ def predict_model(model, X):
 
 
 def save_model(model, model_path):
-    """Save the trained Keras model."""
 
     model_path = Path(model_path)
     model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,8 +209,7 @@ def save_model(model, model_path):
 
 
 def load_trained_model(model_path):
-    """Load a saved Keras model."""
-
+    
     model_path = Path(model_path)
 
     if not model_path.exists():
@@ -225,8 +221,7 @@ def load_trained_model(model_path):
 
 
 def save_tokenizer(tokenizer, tokenizer_path):
-    """Save the tokenizer as a pickle file."""
-
+    
     tokenizer_path = Path(tokenizer_path)
     tokenizer_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -235,8 +230,7 @@ def save_tokenizer(tokenizer, tokenizer_path):
 
 
 def load_tokenizer(tokenizer_path):
-    """Load a saved tokenizer."""
-
+    
     tokenizer_path = Path(tokenizer_path)
 
     if not tokenizer_path.exists():

@@ -20,20 +20,17 @@ def train_model(X_train, y_train, alpha=0.5):
 
 
 def predict_model(model, X):
-    """Generate class predictions."""
-
+    
     return model.predict(X)
 
 
 def predict_probabilities(model, X):
-    """Generate class probabilities."""
-
+    
     return model.predict_proba(X)
 
 
 def save_model(model, model_path):
-    """Save the trained model as a pickle file."""
-
+    
     model_path = Path(model_path)
     model_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -42,8 +39,7 @@ def save_model(model, model_path):
 
 
 def load_model(model_path):
-    """Load a trained model from a pickle file."""
-
+    
     model_path = Path(model_path)
 
     if not model_path.exists():
