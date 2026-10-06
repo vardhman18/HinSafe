@@ -141,7 +141,7 @@ HINSAFE/
 │       └── hinsafe_final_dataset.csv        # Final merged dataset
 │
 │
-├── embeddings/                         ← ADD THIS FOLDER
+├── embeddings/                         
 │   └── cc.hi.300.bin                  ← FastText Hindi model
 |
 ├── notebooks/
