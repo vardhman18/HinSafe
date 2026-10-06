@@ -1,14 +1,13 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+
 def get_tfidf_features(
     train_texts,
     test_texts,
     ngram_range=(1, 2),
     max_features=20000
 ):
-    """
-    Create TF-IDF features for classical ML models.
-    """
+    """Create TF-IDF features for classical ML models."""
 
     vectorizer = TfidfVectorizer(
         ngram_range=ngram_range,
@@ -28,13 +27,10 @@ def get_bilstm_features(
     max_vocab_size=20000,
     max_sequence_length=50
 ):
-    
-    """
-    Tokenize and pad text for the BiLSTM model.
-    """
+    """Tokenize and pad text for the BiLSTM model."""
 
-    from tensorflow.keras.preprocessing.text import Tokenizer
     from tensorflow.keras.preprocessing.sequence import pad_sequences
+    from tensorflow.keras.preprocessing.text import Tokenizer
 
     tokenizer = Tokenizer(
         num_words=max_vocab_size,
@@ -69,3 +65,74 @@ def get_bilstm_features(
     )
 
     return X_train, X_val, X_test, tokenizer
+
+
+def get_mbert_features(
+    train_df,
+    val_df,
+    test_df,
+    model_name="google-bert/bert-base-multilingual-cased",
+    max_length=128
+):
+    """Tokenize train, validation, and test data for mBERT."""
+
+    from datasets import Dataset
+    from transformers import AutoTokenizer
+
+    required_columns = {"text", "label"}
+
+    for name, dataframe in (
+        ("train", train_df),
+        ("validation", val_df),
+        ("test", test_df),
+    ):
+        missing_columns = required_columns - set(dataframe.columns)
+
+        if missing_columns:
+            raise ValueError(
+                f"{name} data is missing columns: {sorted(missing_columns)}"
+            )
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    def tokenize_function(batch):
+        return tokenizer(
+            batch["text"],
+            padding="max_length",
+            truncation=True,
+            max_length=max_length
+        )
+
+    datasets = [
+        Dataset.from_pandas(
+            dataframe[["text", "label"]],
+            preserve_index=False
+        )
+        for dataframe in (train_df, val_df, test_df)
+    ]
+
+    tokenized_datasets = [
+        dataset.map(tokenize_function, batched=True)
+        for dataset in datasets
+    ]
+
+    columns_to_keep = [
+        "input_ids",
+        "attention_mask",
+        "label"
+    ]
+
+    cleaned_datasets = []
+
+    for dataset in tokenized_datasets:
+        columns_to_remove = [
+            column
+            for column in dataset.column_names
+            if column not in columns_to_keep
+        ]
+
+        cleaned_datasets.append(
+            dataset.remove_columns(columns_to_remove)
+        )
+
+    return (*cleaned_datasets, tokenizer)
