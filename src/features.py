@@ -1,5 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+DEFAULT_MBERT_MODEL = "google-bert/bert-base-multilingual-cased"
+DEFAULT_MURIL_MODEL = "google/muril-base-cased"
 
 def get_tfidf_features(
     train_texts,
@@ -67,14 +69,14 @@ def get_bilstm_features(
     return X_train, X_val, X_test, tokenizer
 
 
-def get_mbert_features(
+def get_transformer_features(
     train_df,
     val_df,
     test_df,
-    model_name="google-bert/bert-base-multilingual-cased",
+    model_name,
     max_length=128
 ):
-    """Tokenize train, validation, and test data for mBERT."""
+    """Tokenize datasets for transformer-based classification models."""
 
     from datasets import Dataset
     from transformers import AutoTokenizer
@@ -136,3 +138,39 @@ def get_mbert_features(
         )
 
     return (*cleaned_datasets, tokenizer)
+
+
+def get_mbert_features(
+    train_df,
+    val_df,
+    test_df,
+    model_name=DEFAULT_MBERT_MODEL,
+    max_length=128
+):
+    """Tokenize train, validation, and test data for mBERT."""
+
+    return get_transformer_features(
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        model_name=model_name,
+        max_length=max_length
+    )
+
+
+def get_muril_features(
+    train_df,
+    val_df,
+    test_df,
+    model_name=DEFAULT_MURIL_MODEL,
+    max_length=128
+):
+    """Tokenize train, validation, and test data for MuRIL."""
+
+    return get_transformer_features(
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        model_name=model_name,
+        max_length=max_length
+    )
