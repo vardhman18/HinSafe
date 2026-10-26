@@ -1,0 +1,121 @@
+[
+  {
+    "comment": "tere baap ke gaand mein bulldozer ghusa ke expressway bana dunga",
+    "label": 1,
+    "severity_score": 81,
+    "severity_band": "HATE SPEECH",
+    "categories": [],
+    "flagged_words": {
+      "gaand": 0.135,
+      "dunga": 0.128,
+      "baap": 0.053,
+      "bana": 0.043
+    }
+  },
+  {
+    "comment": "matlab kuch bhi search rape capital in twitter sach samny aa jaye ga pic twitter com doiidzth7a",
+    "label": 0,
+    "severity_score": 20,
+    "severity_band": "SAFE",
+    "categories": [],
+    "flagged_words": {
+      "pic": 0.03,
+      "twitter": 0.013
+    }
+  },
+  {
+    "comment": "t3ri m r h s",
+    "label": 1,
+    "severity_score": 81,
+    "severity_band": "HATE SPEECH",
+    "categories": [],
+    "flagged_words": {
+      "t3ri": 0.235,
+      "m": 0.123,
+      "r": 0.088,
+      "s": 0.019
+    }
+  },
+  {
+    "comment": "2014 archives amit shah s hate speech in shamli western uttar pradesh",
+    "label": 0,
+    "severity_score": 24,
+    "severity_band": "SAFE",
+    "categories": [],
+    "flagged_words": {
+      "shamli": 0.023,
+      "western": 0.013,
+      "in": 0.002
+    }
+  },
+  {
+    "comment": "main terrorism k thekedaron ny pakistan ki jeet ki khabar chalany ki bijaye k hath main hi trophy dikhi di twitter com 3nispw17t8",
+    "label": 0,
+    "severity_score": 23,
+    "severity_band": "SAFE",
+    "categories": [],
+    "flagged_words": {
+      "twitter": 0.014,
+      "di": 0.009,
+      "k": 0.004,
+      "trophy": 0.004,
+      "com": 0.003
+    }
+  },
+  {
+    "comment": "isi waja se aaj itna hate mila mujhe",
+    "label": 0,
+    "severity_score": 20,
+    "severity_band": "SAFE",
+    "categories": [],
+    "flagged_words": {}
+  },
+  {
+    "comment": "arshi ne hi paysa dia hoga ko or colours ko khud to ghar me shilpaji ki izzat utarte rehe ab sayad pyse deke bahar vi wohi jari rakkha he nehayat hi ghatea larki hate her",
+    "label": 1,
+    "severity_score": 76,
+    "severity_band": "HATE SPEECH",
+    "categories": [],
+    "flagged_words": {
+      "ghar": 0.063,
+      "utarte": 0.039,
+      "shilpaji": 0.033,
+      "arshi": 0.031,
+      "he": 0.028
+    }
+  },
+  {
+    "comment": "tu toh full mess food kha raha hai",
+    "label": 0,
+    "severity_score": 19,
+    "severity_band": "SAFE",
+    "categories": [],
+    "flagged_words": {
+      "food": 0.001
+    }
+  },
+  {
+    "comment": "tujhe to 99 log hate karte hai tu kab le raha hai",
+    "label": 0,
+    "severity_score": 19,
+    "severity_band": "SAFE",
+    "categories": [],
+    "flagged_words": {
+      "tujhe": 0.027
+    }
+  },
+  {
+    "comment": "aasha n ritwik mere star me se ek the pvitra rista se bt now i hate both of u aasha n deepika apko hina se itni kya problem h jo uska mjak bna rhi ho phle khud ko to dekh lo hate u so much ab ap apne fans kho denge bs ku6 paiso ke liye",
+    "label": 1,
+    "severity_score": 81,
+    "severity_band": "HATE SPEECH",
+    "categories": [],
+    "flagged_words": {
+      "i": 0.056,
+      "bs": 0.023,
+      "ku6": 0.023,
+      "paiso": 0.017,
+      "ek": 0.016
+    }
+  }
+]
