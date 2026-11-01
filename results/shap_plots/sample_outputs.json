@@ -75,7 +75,9 @@
     "label": 1,
     "severity_score": 76,
     "severity_band": "HATE SPEECH",
-    "categories": [],
+    "categories": [
+      "misogyny"
+    ],
     "flagged_words": {
       "ghar": 0.063,
       "utarte": 0.039,
