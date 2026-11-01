@@ -1,4 +1,3 @@
-"""Inference utilities for the trained HinSafe MuRIL classifier."""
 
 from __future__ import annotations
 
@@ -6,20 +5,98 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Final, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MODEL_PATH = PROJECT_ROOT / "saved_models" / "muril"
 DEFAULT_MAX_LENGTH = 128
 
-_CATEGORY_KEYWORDS = {
-    "cyberbullying": {"bully", "harass", "troll", "trolling", "insult", "loser"},
-    "misogyny": {"woman", "women", "ladki", "larki", "girl", "bitch"},
-    "communal / religious hate": {
-        "hindu", "muslim", "islam", "religion", "mandir", "masjid",
-    },
-    "casteist abuse": {"caste", "dalit", "chamar", "bhangi"},
-    "direct threat": {"kill", "maar", "mar", "murder", "destroy", "rape"},
+_CATEGORY_KEYWORDS: Final[dict[str, frozenset[str]]] = {
+    "cyberbullying": frozenset(
+        {
+            "bully",
+            "bullying",
+            "harass",
+            "harassment",
+            "troll",
+            "trolling",
+            "insult",
+            "insulting",
+            "loser",
+            "bewakoof",
+            "pagal",
+            "nalayak",
+        }
+    ),
+    "misogyny": frozenset(
+        {
+            "woman",
+            "women",
+            "girl",
+            "ladki",
+            "ladkiyo",
+            "larki",
+            "aurat",
+            "bitch",
+            "randi",
+            "rand",
+        }
+    ),
+    "communal / religious hate": frozenset(
+        {
+            "hindu",
+            "muslim",
+            "islam",
+            "religion",
+            "mandir",
+            "masjid",
+            "musalman",
+            "kaafir",
+            "kafir",
+            "pakistani",
+        }
+    ),
+    "casteist abuse": frozenset(
+        {
+            "caste",
+            "dalit",
+            "chamar",
+            "bhangi",
+            "harijan",
+            "neech",
+        }
+    ),
+    "direct threat": frozenset(
+        {
+            "kill",
+            "killing",
+            "maar",
+            "mar",
+            "marr",
+            "murder",
+            "destroy",
+            "rape",
+            "maarunga",
+            "marunga",
+            "dhamki",
+        }
+    ),
+    "obscene abuse": frozenset(
+        {
+            "gaali",
+            "gali",
+            "chutiya",
+            "madarchod",
+            "maderchod",
+            "behenchod",
+            "bhenchod",
+            "haramkhor",
+            "kamina",
+            "kamine",
+            "kutta",
+            "kutte",
+        }
+    ),
 }
 
 
@@ -36,11 +113,13 @@ def clean_text(text: str) -> str:
 
 
 def _categories_for(text: str) -> list[str]:
+    """Return categories containing at least one matching complete word."""
+
     tokens = set(text.split())
     return [
         category
         for category, keywords in _CATEGORY_KEYWORDS.items()
-        if tokens.intersection(keywords)
+        if not tokens.isdisjoint(keywords)
     ]
 
 
@@ -114,10 +193,7 @@ class Predictor:
             max_length=self.max_length,
             return_tensors="pt",
         )
-        inputs = {
-            key: value.to(self.device)
-            for key, value in inputs.items()
-        }
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}
 
         with self._torch.no_grad():
             probabilities = self._torch.softmax(
