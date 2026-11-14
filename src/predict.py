@@ -5,98 +5,45 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Any, Final, Sequence
+from typing import Any, Sequence
+
+if __package__:
+    from src.preprocessing import basic_clean
+else:
+    from preprocessing import basic_clean
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MODEL_PATH = PROJECT_ROOT / "saved_models" / "muril"
 DEFAULT_MAX_LENGTH = 128
+TOP_N_WORDS = 5
+OFFENSIVE_LABEL = "OFFENSIVE"
+OFFENSIVE_THRESHOLD = 0.5
 
-_CATEGORY_KEYWORDS: Final[dict[str, frozenset[str]]] = {
-    "cyberbullying": frozenset(
-        {
-            "bully",
-            "bullying",
-            "harass",
-            "harassment",
-            "troll",
-            "trolling",
-            "insult",
-            "insulting",
-            "loser",
-            "bewakoof",
-            "pagal",
-            "nalayak",
-        }
-    ),
-    "misogyny": frozenset(
-        {
-            "woman",
-            "women",
-            "girl",
-            "ladki",
-            "ladkiyo",
-            "larki",
-            "aurat",
-            "bitch",
-            "randi",
-            "rand",
-        }
-    ),
-    "communal / religious hate": frozenset(
-        {
-            "hindu",
-            "muslim",
-            "islam",
-            "religion",
-            "mandir",
-            "masjid",
-            "musalman",
-            "kaafir",
-            "kafir",
-            "pakistani",
-        }
-    ),
-    "casteist abuse": frozenset(
-        {
-            "caste",
-            "dalit",
-            "chamar",
-            "bhangi",
-            "harijan",
-            "neech",
-        }
-    ),
-    "direct threat": frozenset(
-        {
-            "kill",
-            "killing",
-            "maar",
-            "mar",
-            "marr",
-            "murder",
-            "destroy",
-            "rape",
-            "maarunga",
-            "marunga",
-            "dhamki",
-        }
-    ),
-    "obscene abuse": frozenset(
-        {
-            "gaali",
-            "gali",
-            "chutiya",
-            "madarchod",
-            "maderchod",
-            "behenchod",
-            "bhenchod",
-            "haramkhor",
-            "kamina",
-            "kamine",
-            "kutta",
-            "kutte",
-        }
-    ),
+CATEGORY_LEXICON: dict[str, list[str]] = {
+    "cyberbullying": [
+        "bekaar", "ghatiya", "nalayak", "pagal", "bewakoof",
+        "harass", "troll", "insult", "loser",
+    ],
+    "direct threat": [
+        "mar ja", "maar dunga", "maarunga", "marunga",
+        "khatam kar dunga", "jaan se maar", "jaan se maarunga",
+        "kill", "murder", "rape", "dhamki",
+    ],
+    "misogyny": [
+        "woman", "women", "girl", "ladki", "larki", "aurat",
+        "bitch", "randi",
+    ],
+    "communal / religious hate": [
+        "hindu", "muslim", "musalman", "islam", "mandir", "masjid",
+        "kaafir", "kafir", "religion",
+    ],
+    "casteist abuse": [
+        "caste", "dalit", "chamar", "bhangi", "harijan", "neech",
+    ],
+    "obscene abuse": [
+        "gaali", "gali", "chutiya", "madarchod", "maderchod",
+        "behenchod", "bhenchod", "haramkhor", "kamina", "kutta",
+    ],
 }
 
 
@@ -105,32 +52,165 @@ def clean_text(text: str) -> str:
 
     if not isinstance(text, str):
         raise TypeError("text must be a string")
-    text = text.lower()
-    text = re.sub(r"http\S+|www\S+", "", text)
-    text = re.sub(r"@\w+|#\w+", "", text)
-    text = re.sub(r"[^\w\s]", " ", text)
-    return re.sub(r"\s+", " ", text).strip()
+    return basic_clean(text)
 
 
-def _categories_for(text: str) -> list[str]:
-    """Return categories containing at least one matching complete word."""
+def merge_into_words(
+    tokens: Sequence[Any],
+    values: Sequence[Any],
+) -> tuple[list[str], list[float]]:
+    """Merge SHAP subword tokens into whole words and sum their values."""
 
-    tokens = set(text.split())
-    return [
-        category
-        for category, keywords in _CATEGORY_KEYWORDS.items()
-        if not tokens.isdisjoint(keywords)
+    words = []
+    scores = []
+    current_word = ""
+    current_score = 0.0
+
+    for token, value in zip(tokens, values):
+        token = str(token)
+        value = float(value)
+
+        if not token.strip():
+            continue
+
+        if token[0].isspace() and current_word:
+            words.append(current_word)
+            scores.append(current_score)
+            current_word = ""
+            current_score = 0.0
+
+        current_word += token.strip()
+        current_score += value
+
+        if token.endswith(" "):
+            words.append(current_word)
+            scores.append(current_score)
+            current_word = ""
+            current_score = 0.0
+
+    if current_word:
+        words.append(current_word)
+        scores.append(current_score)
+
+    return words, scores
+
+
+def get_flagged_words(
+    explanation: Any,
+    top_n: int = TOP_N_WORDS,
+) -> dict[str, float]:
+    """Return the strongest words contributing toward OFFENSIVE."""
+
+    words, scores = merge_into_words(explanation.data, explanation.values)
+    positive_pairs = [
+        (word, score)
+        for word, score in zip(words, scores)
+        if score > 0
     ]
+    positive_pairs.sort(key=lambda pair: pair[1], reverse=True)
+    return {
+        word: round(score, 3)
+        for word, score in positive_pairs[:top_n]
+    }
+
+
+def calculate_severity(offensive_probability: float) -> int:
+    """Convert model confidence from 0-1 into a 0-100 severity score."""
+
+    return int(round(float(offensive_probability) * 100))
 
 
 def severity_band(score: int) -> str:
-    """Convert a 0-100 severity score into the public HinSafe band."""
+    """Map a 0-100 severity score to the public HinSafe band."""
 
-    if score <= 40:
+    if score < 40:
         return "SAFE"
-    if score <= 70:
+    if score < 70:
         return "OFFENSIVE"
     return "HATE SPEECH"
+
+
+def detect_categories(
+    clean_text: str,
+    lexicon: dict[str, Sequence[str]] = CATEGORY_LEXICON,
+) -> list[str]:
+    """Return categories matched by complete words or phrases."""
+
+    if not isinstance(clean_text, str):
+        raise TypeError("clean_text must be a string")
+
+    normalized_text = re.sub(r"\s+", " ", clean_text.lower()).strip()
+    found_categories: list[str] = []
+
+    for category, phrases in lexicon.items():
+        for phrase in phrases:
+            normalized_phrase = re.sub(r"\s+", " ", phrase.lower()).strip()
+            if not normalized_phrase:
+                continue
+
+            pattern = rf"(?<!\w){re.escape(normalized_phrase)}(?!\w)"
+            if re.search(pattern, normalized_text):
+                found_categories.append(category)
+                break
+
+    return found_categories
+
+
+def get_offensive_probability(
+    text: str,
+    prediction_pipeline: Any,
+) -> float:
+    """Return the prediction pipeline's probability for the offensive class."""
+
+    outputs = prediction_pipeline([text])[0]
+    probabilities = {
+        item["label"]: float(item["score"])
+        for item in outputs
+    }
+    if OFFENSIVE_LABEL not in probabilities:
+        raise KeyError(
+            "OFFENSIVE label was not returned by the prediction pipeline."
+        )
+    return probabilities[OFFENSIVE_LABEL]
+
+
+def analyze_comment(
+    raw_text: str,
+    prediction_pipeline: Any,
+    explainer: Any = None,
+    explain: bool = True,
+) -> dict[str, Any]:
+    """Analyze one Hinglish comment and optionally explain its result."""
+
+    normalized_text = clean_text(raw_text)
+    if not normalized_text:
+        raise ValueError("Comment is empty after cleaning.")
+
+    offensive_probability = get_offensive_probability(
+        normalized_text,
+        prediction_pipeline,
+    )
+    label = int(offensive_probability >= OFFENSIVE_THRESHOLD)
+    severity_score = calculate_severity(offensive_probability)
+
+    flagged_words = {}
+    if explain:
+        if explainer is None:
+            raise ValueError(
+                "An explainer is required when explain=True."
+            )
+        shap_values = explainer([normalized_text])
+        explanation = shap_values[0, :, OFFENSIVE_LABEL]
+        flagged_words = get_flagged_words(explanation)
+
+    return {
+        "comment": raw_text,
+        "label": label,
+        "severity_score": severity_score,
+        "severity_band": severity_band(severity_score),
+        "categories": detect_categories(normalized_text) if label else [],
+        "flagged_words": flagged_words,
+    }
 
 
 class Predictor:
@@ -158,8 +238,7 @@ class Predictor:
             )
         except ImportError as error:
             raise RuntimeError(
-                "Prediction requires torch and transformers. "
-                "Install dependencies from requirements.txt."
+                "Install torch and transformers from requirements.txt."
             ) from error
 
         self._torch = torch
@@ -201,18 +280,20 @@ class Predictor:
                 dim=1,
             )
 
-        results = []
+        results: list[dict[str, Any]] = []
         for text, scores in zip(cleaned_texts, probabilities.cpu().tolist()):
             label = max(range(len(scores)), key=scores.__getitem__)
-            hate_probability = scores[1] if len(scores) > 1 else scores[0]
-            score = round(hate_probability * 100)
+            offensive_probability = (
+                scores[1] if len(scores) > 1 else scores[0]
+            )
+            score = calculate_severity(offensive_probability)
             results.append(
                 {
                     "comment": text,
                     "label": label,
                     "severity_score": score,
                     "severity_band": severity_band(score),
-                    "categories": _categories_for(text) if label else [],
+                    "categories": detect_categories(text) if label else [],
                     "flagged_words": {},
                 }
             )
@@ -258,9 +339,10 @@ def main() -> None:
         help="Maximum number of tokenizer tokens",
     )
     args = parser.parse_args()
+    comment = " ".join(args.text)
     print(
         json.dumps(
-            predict_text(" ".join(args.text), args.model_path, args.max_length),
+            predict_text(comment, args.model_path, args.max_length),
             ensure_ascii=False,
             indent=2,
         )
