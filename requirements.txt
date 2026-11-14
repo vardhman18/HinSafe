@@ -1,16 +1,17 @@
-
 # Data processing
 numpy
 pandas
 
 # Machine Learning
 scikit-learn
+joblib
 
-# Deep Learning
+# Deep Learning (BiLSTM, Keras)
 tensorflow
 
 # Transformers / MuRIL / mBERT
 transformers
+datasets
 torch
 sentencepiece
 accelerate
@@ -32,13 +33,14 @@ ipykernel
 # API
 fastapi
 uvicorn
+pydantic>=2
 
 # Dashboard
 streamlit
+requests
 
 # Experiment tracking
 wandb
 
 # Utilities
-joblib
 openpyxl
