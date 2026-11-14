@@ -178,11 +178,14 @@ HINSAFE/
 │
 ├── api/
 │   ├── main.py                              # FastAPI app
+│   ├── health.py
 │   ├── model_loader.py
 │   └── schemas.py
 │
-├── dashboard/
-│   └── app.py                               # Streamlit dashboard
+├── dashboard/          # Streamlit dashboard
+│   ├── api_client.py   # talks to the FastAPI backend
+│   ├── charts.py       # display helpers (severity, highlights, charts)
+│   └── app.py          # the page layout
 │
 ├── results/
 │   ├── model_comparison.csv
