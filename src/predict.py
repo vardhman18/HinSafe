@@ -56,7 +56,8 @@ CATEGORY_LEXICON: dict[str, list[str]] = {
     ],
     "appearance-based abuse": [
         "ugly", "mota", "moti", "fatso", "kala", "kali", "ganja",
-        "takla", "suar jaisa",
+        "takla", "suar jaisa", "dubla", "duwal", "patla", "patli",
+        "sukha", "sukhi", "haddi", "haddi pasli", "lakdi",
     ],
     "obscene abuse": [
         "gaali", "gali", "chutiya", "madarchod", "maderchod",
