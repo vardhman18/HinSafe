@@ -22,27 +22,47 @@ OFFENSIVE_THRESHOLD = 0.5
 CATEGORY_LEXICON: dict[str, list[str]] = {
     "cyberbullying": [
         "bekaar", "ghatiya", "nalayak", "pagal", "bewakoof",
-        "harass", "troll", "insult", "loser",
+        "harass", "troll", "insult", "loser", "sadiyal", "suar",
+        "idiot", "stupid", "moron", "useless", "nikamma", "nalla",
+        "gawar", "jahil", "chapri", "chhapri", "aukat",
     ],
     "direct threat": [
         "mar ja", "maar dunga", "maarunga", "marunga",
         "khatam kar dunga", "jaan se maar", "jaan se maarunga",
-        "kill", "murder", "rape", "dhamki",
+        "dekh lunga", "dekh loonga", "tod dunga", "jala dunga",
+        "uda dunga", "goli maar", "zinda nahi chhodunga",
+        "kill", "murder", "rape", "dhamki", "threat",
     ],
     "misogyny": [
         "woman", "women", "girl", "ladki", "larki", "aurat",
-        "bitch", "randi",
+        "bitch", "randi", "slut", "whore", "chhinal", "chinal",
+        "characterless", "item", "maal",
     ],
     "communal / religious hate": [
         "hindu", "muslim", "musalman", "islam", "mandir", "masjid",
-        "kaafir", "kafir", "religion",
+        "kaafir", "kafir", "religion", "katua", "mulla", "mulle",
+        "jihadi", "aatankwadi", "terrorist", "paki",
     ],
     "casteist abuse": [
         "caste", "dalit", "chamar", "bhangi", "harijan", "neech",
+        "neech jaat", "low caste", "chuhra", "achhoot", "untouchable",
+    ],
+    "homophobic / transphobic abuse": [
+        "hijra", "chakka", "kinnar", "homo", "faggot", "tranny",
+    ],
+    "ableist abuse": [
+        "retard", "retarded", "andha", "langda", "lula", "gunga",
+        "behra",
+    ],
+    "appearance-based abuse": [
+        "ugly", "mota", "moti", "fatso", "kala", "kali", "ganja",
+        "takla", "suar jaisa",
     ],
     "obscene abuse": [
         "gaali", "gali", "chutiya", "madarchod", "maderchod",
         "behenchod", "bhenchod", "haramkhor", "kamina", "kutta",
+        "fuck", "mother fuck", "motherfuck", "asshole", "bastard",
+        "son of a bitch", "dumbass", "bullshit", "harami", "randwa",
     ],
 }
 
@@ -190,7 +210,16 @@ def analyze_comment(
         normalized_text,
         prediction_pipeline,
     )
-    label = int(offensive_probability >= OFFENSIVE_THRESHOLD)
+    categories = detect_categories(normalized_text)
+    label = int(
+        offensive_probability >= OFFENSIVE_THRESHOLD
+        or bool(categories)
+    )
+    if label:
+        offensive_probability = max(
+            offensive_probability,
+            OFFENSIVE_THRESHOLD,
+        )
     severity_score = calculate_severity(offensive_probability)
 
     flagged_words = {}
@@ -208,7 +237,7 @@ def analyze_comment(
         "label": label,
         "severity_score": severity_score,
         "severity_band": severity_band(severity_score),
-        "categories": detect_categories(normalized_text) if label else [],
+        "categories": categories if label else [],
         "flagged_words": flagged_words,
     }
 
@@ -286,6 +315,13 @@ class Predictor:
             offensive_probability = (
                 scores[1] if len(scores) > 1 else scores[0]
             )
+            categories = detect_categories(text)
+            if categories:
+                label = 1
+                offensive_probability = max(
+                    offensive_probability,
+                    OFFENSIVE_THRESHOLD,
+                )
             score = calculate_severity(offensive_probability)
             results.append(
                 {
@@ -293,7 +329,7 @@ class Predictor:
                     "label": label,
                     "severity_score": score,
                     "severity_band": severity_band(score),
-                    "categories": detect_categories(text) if label else [],
+                    "categories": categories if label else [],
                     "flagged_words": {},
                 }
             )

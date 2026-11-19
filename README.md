@@ -101,6 +101,10 @@ For every Hinglish comment, the system returns:
 - Communal / Religious hate
 - Casteist abuse
 - Direct threat
+- Homophobic / transphobic abuse
+- Ableist abuse
+- Appearance-based abuse
+- Obscene abuse
 
 ---
 
